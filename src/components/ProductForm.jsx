@@ -91,11 +91,17 @@ const ProductForm = ({ onSubmit, editingProduct, onCancelEdit }) => {
     e.preventDefault();
     if (!validate()) return;
 
+    // Sanitize function to strip HTML tags to prevent XSS
+    const sanitize = (text) => {
+      if (!text) return '';
+      return text.replace(/<[^>]*>/g, '').trim();
+    };
+
     const productData = {
-      name: name.trim(),
+      name: sanitize(name),
       price: parseFloat(price),
-      description: description.trim(),
-      category,
+      description: sanitize(description),
+      category: sanitize(category),
       image
     };
 

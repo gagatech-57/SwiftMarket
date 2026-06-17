@@ -69,7 +69,42 @@ function App() {
     }
   }, [theme]);
 
-  // 3. Helper functions
+  // 3. Security Shield (Block right click and developer tools keybinds)
+  useEffect(() => {
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+      showToast('Security Notice: Right-click is restricted to protect catalog assets.', 'info');
+    };
+
+    const handleKeyDown = (e) => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const metaOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+      
+      const isConsoleHotkey = [
+        e.key === 'F12',
+        metaOrCtrl && e.shiftKey && e.key.toLowerCase() === 'i',
+        metaOrCtrl && e.shiftKey && e.key.toLowerCase() === 'j',
+        metaOrCtrl && e.shiftKey && e.key.toLowerCase() === 'c',
+        metaOrCtrl && e.shiftKey && e.key.toLowerCase() === 'k',
+        metaOrCtrl && e.key.toLowerCase() === 'u'
+      ].some(Boolean);
+
+      if (isConsoleHotkey) {
+        e.preventDefault();
+        showToast('Security Shield: Source code inspection hotkeys are restricted.', 'info');
+      }
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // 4. Helper functions
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);

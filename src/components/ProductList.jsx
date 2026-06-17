@@ -11,6 +11,7 @@ const ProductList = ({ products, onAddToCart, onQuickView }) => {
               src={product.image} 
               className="product-img" 
               alt={product.name} 
+              loading="lazy"
               onError={(e) => { e.target.src = 'https://placehold.co/600x400?text=Image+Load+Error'; }}
             />
             <div style={{
