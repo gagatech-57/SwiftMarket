@@ -62,7 +62,7 @@ const Navbar = ({ userRole, currentUser, theme, toggleTheme, cartCount, toggleCa
           style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
         >
           <RiLogoutBoxRLine />
-          <span>Sign Out</span>
+          <span className="logout-text">Sign Out</span>
         </button>
       </div>
 
@@ -97,6 +97,34 @@ const Navbar = ({ userRole, currentUser, theme, toggleTheme, cartCount, toggleCa
         @media (max-width: 600px) {
           .user-info {
             display: none;
+          }
+        }
+        @media (max-width: 550px) {
+          .navbar {
+            flex-wrap: wrap;
+            padding: 12px 16px;
+            gap: 12px 0;
+          }
+          .nav-brand {
+            order: 1;
+          }
+          .nav-actions {
+            order: 2;
+          }
+          .nav-links {
+            order: 3;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-top: 2px;
+          }
+        }
+        @media (max-width: 500px) {
+          .logout-text {
+            display: none;
+          }
+          .btn-sm {
+            padding: 6px 8px;
           }
         }
       `}} />

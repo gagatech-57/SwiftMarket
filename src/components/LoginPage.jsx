@@ -176,7 +176,7 @@ const LoginPage = ({ onLogin }) => {
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Quick Demo Accounts
           </p>
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div className="login-demo-actions">
             <button 
               type="button" 
               className="btn btn-secondary btn-sm" 
@@ -241,6 +241,24 @@ const LoginPage = ({ onLogin }) => {
           background-color: var(--bg-card);
           color: var(--primary);
           box-shadow: var(--shadow-sm);
+        }
+        .login-demo-actions {
+          display: flex;
+          gap: 10px;
+        }
+        @media (max-width: 400px) {
+          .login-demo-actions {
+            flex-direction: column;
+            gap: 8px;
+          }
+          .login-tab-btn {
+            font-size: 0.75rem;
+            padding: 8px 4px;
+            gap: 4px;
+          }
+          .login-card {
+            padding: 24px 16px;
+          }
         }
       `}} />
     </div>

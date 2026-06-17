@@ -88,7 +88,8 @@ const ProductList = ({ products, onAddToCart, onQuickView }) => {
                   title="Add to Cart"
                   aria-label="Add to cart"
                 >
-                  <RiShoppingCartLine /> Add to Cart
+                  <RiShoppingCartLine />
+                  <span className="cart-btn-text"> Add to Cart</span>
                 </button>
               </div>
             </div>

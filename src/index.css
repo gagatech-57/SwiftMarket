@@ -999,8 +999,8 @@ textarea.form-control {
   
   /* Grid layout to fit exactly 2 products per row on mobile to look modern and retail-optimized! */
   .grid-container {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
   }
   
   /* Product Cards shrink slightly to look good in 2-column layout */
@@ -1018,24 +1018,25 @@ textarea.form-control {
     font-size: 0.95rem;
   }
   .product-footer {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+    display: flex;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
     padding-top: 8px;
     margin-top: 8px;
   }
   .product-footer .btn {
-    width: 100%;
-    padding: 6px 10px;
-    font-size: 0.75rem;
+    padding: 6px 8px;
+    font-size: 0.8rem;
   }
   .product-footer div {
-    width: 100%;
-    gap: 4px;
+    gap: 6px;
   }
   .product-footer .btn-icon-only {
-    width: auto;
     padding: 6px;
+  }
+  .cart-btn-text {
+    display: none;
   }
   
   /* Login card spacing */
