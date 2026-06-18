@@ -5,7 +5,7 @@ import BuyerPage from './components/BuyerPage';
 import LoginPage from './components/LoginPage';
 import Cart from './components/Cart';
 import { RiCheckboxCircleLine, RiNotification3Line } from 'react-icons/ri';
-import { generate400Products } from './data/mockProducts';
+import { generate700Products } from './data/mockProducts';
 
 function App() {
   // 1. Initial State
@@ -13,15 +13,15 @@ function App() {
     const saved = localStorage.getItem('products');
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Auto-update to 400 products if the user has older, smaller cache
-      if (parsed.length < 400) {
-        const generated = generate400Products();
+      // Auto-update to 700 products if the user has older, smaller cache
+      if (parsed.length < 700) {
+        const generated = generate700Products();
         localStorage.setItem('products', JSON.stringify(generated));
         return generated;
       }
       return parsed;
     }
-    return generate400Products();
+    return generate700Products();
   });
 
   const [cart, setCart] = useState(() => {
