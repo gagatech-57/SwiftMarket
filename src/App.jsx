@@ -5,24 +5,50 @@ import BuyerPage from './components/BuyerPage';
 import LoginPage from './components/LoginPage';
 import Cart from './components/Cart';
 import { RiCheckboxCircleLine, RiNotification3Line } from 'react-icons/ri';
-import { generate700Products } from './data/mockProducts';
+// Database backend handles product data
 
 function App() {
   // 1. Initial State
-  const [products, setProducts] = useState(() => {
-    const saved = localStorage.getItem('products');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // Auto-update to 700 products if the user has older, smaller cache
-      if (parsed.length < 700) {
-        const generated = generate700Products();
-        localStorage.setItem('products', JSON.stringify(generated));
-        return generated;
-      }
-      return parsed;
+  const [products, setProducts] = useState([]);
+
+  // Fetch products from database
+  useEffect(() => {
+    fetch('/api/products')
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load products');
+        return res.json();
+      })
+      .then(data => setProducts(data))
+      .catch(err => console.error('Error fetching products:', err));
+  }, []);
+
+  // Validate JWT session token on load
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch('/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Session expired');
+        return res.json();
+      })
+      .then(data => {
+        setIsLoggedIn(true);
+        setUserRole(data.role);
+        setCurrentUser({ email: data.email, name: data.name });
+        if (data.cart) {
+          setCart(data.cart);
+        }
+      })
+      .catch(err => {
+        console.warn('Auto-login failed:', err.message);
+        handleLogout();
+      });
     }
-    return generate700Products();
-  });
+  }, []);
 
   const [cart, setCart] = useState(() => {
     const saved = localStorage.getItem('cart');
@@ -38,7 +64,10 @@ function App() {
   });
 
   const [currentUser, setCurrentUser] = useState(() => {
-    return localStorage.getItem('currentUser') || '';
+    return {
+      email: localStorage.getItem('currentUserEmail') || '',
+      name: localStorage.getItem('currentUserName') || ''
+    };
   });
 
   const [theme, setTheme] = useState(() => {
@@ -51,14 +80,25 @@ function App() {
   const [toast, setToast] = useState(null); // { message: string, type: 'success' | 'info' }
   const [isCheckoutSuccess, setIsCheckoutSuccess] = useState(false);
 
-  // 2. Persist State in LocalStorage
-  useEffect(() => {
-    localStorage.setItem('products', JSON.stringify(products));
-  }, [products]);
+  // 2. Persist State in LocalStorage (Products managed in database, only syncing Cart/Theme)
 
+  // Sync cart list to database when client cart changes
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
-  }, [cart]);
+    
+    const token = localStorage.getItem('token');
+    if (token && isLoggedIn && userRole === 'buyer') {
+      fetch('/api/cart/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ cart })
+      })
+      .catch(err => console.error('Error syncing cart:', err));
+    }
+  }, [cart, isLoggedIn, userRole]);
 
   useEffect(() => {
     localStorage.setItem('theme', theme);
@@ -69,40 +109,7 @@ function App() {
     }
   }, [theme]);
 
-  // 3. Security Shield (Block right click and developer tools keybinds)
-  useEffect(() => {
-    const handleContextMenu = (e) => {
-      e.preventDefault();
-      showToast('Security Notice: Right-click is restricted to protect catalog assets.', 'info');
-    };
 
-    const handleKeyDown = (e) => {
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-      const metaOrCtrl = isMac ? e.metaKey : e.ctrlKey;
-      
-      const isConsoleHotkey = [
-        e.key === 'F12',
-        metaOrCtrl && e.shiftKey && e.key.toLowerCase() === 'i',
-        metaOrCtrl && e.shiftKey && e.key.toLowerCase() === 'j',
-        metaOrCtrl && e.shiftKey && e.key.toLowerCase() === 'c',
-        metaOrCtrl && e.shiftKey && e.key.toLowerCase() === 'k',
-        metaOrCtrl && e.key.toLowerCase() === 'u'
-      ].some(Boolean);
-
-      if (isConsoleHotkey) {
-        e.preventDefault();
-        showToast('Security Shield: Source code inspection hotkeys are restricted.', 'info');
-      }
-    };
-
-    document.addEventListener('contextmenu', handleContextMenu);
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.removeEventListener('contextmenu', handleContextMenu);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
 
   // 4. Helper functions
   const showToast = (message, type = 'success') => {
@@ -115,48 +122,82 @@ function App() {
   };
 
   // 4. Session actions
-  const handleLogin = (role, email) => {
+  function handleLogin(role, email, token, name, dbCart) {
     setIsLoggedIn(true);
     setUserRole(role);
-    setCurrentUser(email);
+    setCurrentUser({ name, email });
     localStorage.setItem('isLoggedIn', 'true');
     localStorage.setItem('userRole', role);
-    localStorage.setItem('currentUser', email);
+    localStorage.setItem('currentUserEmail', email);
+    localStorage.setItem('currentUserName', name);
+    localStorage.setItem('token', token);
+    if (dbCart) {
+      setCart(dbCart);
+      localStorage.setItem('cart', JSON.stringify(dbCart));
+    }
     showToast(`Welcome! Logged in as ${role === 'buyer' ? 'Buyer' : 'Seller'}`, 'success');
-  };
+  }
 
-  const handleLogout = () => {
+  function handleLogout() {
     setIsLoggedIn(false);
     setUserRole(null);
-    setCurrentUser('');
+    setCurrentUser({ name: '', email: '' });
     setIsCartOpen(false);
+    setCart([]);
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userRole');
-    localStorage.removeItem('currentUser');
+    localStorage.removeItem('currentUserEmail');
+    localStorage.removeItem('currentUserName');
+    localStorage.removeItem('token');
+    localStorage.removeItem('cart');
     showToast('Logged out successfully.', 'info');
-  };
+  }
 
   // 5. Product actions (Seller)
   const handleAddProduct = (newProduct) => {
-    if (newProduct.id) {
-      setProducts(prev => prev.map(p => p.id === newProduct.id ? newProduct : p));
-      setCart(prev => prev.map(item => item.id === newProduct.id ? { ...item, ...newProduct } : item));
-      showToast(`Updated product "${newProduct.name}" successfully!`);
-    } else {
-      const productWithId = {
-        ...newProduct,
-        id: `prod-${Date.now()}`
-      };
-      setProducts(prev => [productWithId, ...prev]);
-      showToast(`Product "${newProduct.name}" added successfully!`);
-    }
+    fetch('/api/products', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(newProduct)
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Failed to save product');
+      return res.json();
+    })
+    .then(savedProduct => {
+      if (newProduct.id) {
+        setProducts(prev => prev.map(p => p.id === savedProduct.id ? savedProduct : p));
+        setCart(prev => prev.map(item => item.id === savedProduct.id ? { ...item, ...savedProduct } : item));
+        showToast(`Updated product "${savedProduct.name}" successfully!`);
+      } else {
+        setProducts(prev => [savedProduct, ...prev]);
+        showToast(`Product "${savedProduct.name}" added successfully!`);
+      }
+    })
+    .catch(err => {
+      showToast(`Error: ${err.message}`, 'error');
+    });
   };
 
   const handleDeleteProduct = (productId) => {
     const product = products.find(p => p.id === productId);
-    setProducts(prev => prev.filter(p => p.id !== productId));
-    setCart(prev => prev.filter(item => item.id !== productId));
-    showToast(`Removed product "${product?.name || 'Item'}"`);
+    fetch(`/api/products/${productId}`, {
+      method: 'DELETE'
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Failed to delete product');
+      return res.json();
+    })
+    .then(() => {
+      setProducts(prev => prev.filter(p => p.id !== productId));
+      setCart(prev => prev.filter(item => item.id !== productId));
+      showToast(`Removed product "${product?.name || 'Item'}"`);
+    })
+    .catch(err => {
+      showToast(`Error: ${err.message}`, 'error');
+    });
   };
 
   // 6. Cart Actions (Buyer)

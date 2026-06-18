@@ -3,6 +3,8 @@ import { RiUser3Line, RiLockLine, RiShoppingBag3Line, RiStore2Line, RiArrowRight
 
 const LoginPage = ({ onLogin }) => {
   const [activeTab, setActiveTab] = useState('buyer'); // 'buyer' or 'seller'
+  const [isSignupMode, setIsSignupMode] = useState(false);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -11,38 +13,45 @@ const LoginPage = ({ onLogin }) => {
     e.preventDefault();
     setError('');
 
+    if (isSignupMode && !name.trim()) {
+      setError('Please enter your full name');
+      return;
+    }
     if (!email.trim() || !password.trim()) {
-      setError('Please fill in all credentials');
+      setError('Please fill in all fields');
       return;
     }
 
-    // Mock verification
-    if (activeTab === 'buyer') {
-      if (email.toLowerCase() === 'buyer@swiftmarket.com' && password === 'buyer123') {
-        onLogin('buyer', email);
-      } else {
-        setError('Invalid buyer credentials. Please check your email and password.');
-      }
-    } else {
-      if (email.toLowerCase() === 'seller@swiftmarket.com' && password === 'seller123') {
-        onLogin('seller', email);
-      } else {
-        setError('Invalid seller credentials. Please check your email and password.');
-      }
-    }
-  };
+    const endpoint = isSignupMode ? '/api/auth/signup' : '/api/auth/login';
+    const requestBody = isSignupMode 
+      ? { name: name.trim(), email: email.toLowerCase().trim(), password, role: activeTab }
+      : { email: email.toLowerCase().trim(), password };
 
-  const handleQuickFill = (role) => {
-    if (role === 'buyer') {
-      setActiveTab('buyer');
-      setEmail('buyer@swiftmarket.com');
-      setPassword('buyer123');
-    } else {
-      setActiveTab('seller');
-      setEmail('seller@swiftmarket.com');
-      setPassword('seller123');
-    }
-    setError('');
+    fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    })
+    .then(async (res) => {
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Authentication failed. Please try again.');
+      }
+      return data;
+    })
+    .then((data) => {
+      // Validate that the account role matches the active portal tab
+      if (data.role !== activeTab) {
+        setError(`Access Denied: This account is registered for the ${data.role === 'buyer' ? 'Buyer' : 'Seller'} Portal.`);
+        return;
+      }
+      onLogin(data.role, data.email, data.token, data.name, data.cart);
+    })
+    .catch((err) => {
+      setError(err.message);
+    });
   };
 
   return (
@@ -67,7 +76,7 @@ const LoginPage = ({ onLogin }) => {
           </div>
           <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)' }}>Welcome to SwiftMarket</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '4px' }}>
-            Access your account to start trading or shopping
+            {isSignupMode ? 'Create a new account to get started' : 'Access your account to start trading or shopping'}
           </p>
         </div>
 
@@ -97,7 +106,7 @@ const LoginPage = ({ onLogin }) => {
           </button>
         </div>
 
-        {/* Login Form */}
+        {/* Login/Signup Form */}
         <form onSubmit={handleSubmit} style={{ marginTop: '24px' }}>
           {error && (
             <div style={{
@@ -114,6 +123,24 @@ const LoginPage = ({ onLogin }) => {
             </div>
           )}
 
+          {isSignupMode && (
+            <div className="form-group">
+              <label className="form-label">Full Name</label>
+              <div className="search-input-wrapper">
+                <RiUser3Line className="search-icon" />
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  placeholder="Guna"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  style={{ paddingLeft: '44px' }}
+                  required
+                />
+              </div>
+            </div>
+          )}
+
           <div className="form-group">
             <label className="form-label">Email Address</label>
             <div className="search-input-wrapper">
@@ -121,7 +148,7 @@ const LoginPage = ({ onLogin }) => {
               <input 
                 type="email" 
                 className="form-control" 
-                placeholder={activeTab === 'buyer' ? 'buyer@swiftmarket.com' : 'seller@swiftmarket.com'}
+                placeholder="guna@swiftmarket.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={{ paddingLeft: '44px' }}
@@ -149,41 +176,37 @@ const LoginPage = ({ onLogin }) => {
           <button 
             type="submit" 
             className="btn btn-primary" 
-            style={{ width: '100%', padding: '14px', marginTop: '10px' }}
+            style={{ width: '100%', padding: '14px', marginTop: '16px' }}
           >
-            Sign In as {activeTab === 'buyer' ? 'Buyer' : 'Seller'}
+            {isSignupMode ? 'Create Account & Sign In' : `Sign In as ${activeTab === 'buyer' ? 'Buyer' : 'Seller'}`}
             <RiArrowRightLine style={{ marginLeft: '4px' }} />
           </button>
         </form>
 
-        {/* Quick Demo Fill Buttons */}
-        <div style={{
-          marginTop: '32px',
-          paddingTop: '24px',
-          borderTop: '1px solid var(--border)',
-          textAlign: 'left'
-        }}>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Quick Demo Accounts
-          </p>
-          <div className="login-demo-actions">
-            <button 
-              type="button" 
-              className="btn btn-secondary btn-sm" 
-              onClick={() => handleQuickFill('buyer')}
-              style={{ flex: 1, fontSize: '0.8rem' }}
-            >
-              Fill Buyer Demo
-            </button>
-            <button 
-              type="button" 
-              className="btn btn-secondary btn-sm" 
-              onClick={() => handleQuickFill('seller')}
-              style={{ flex: 1, fontSize: '0.8rem' }}
-            >
-              Fill Seller Demo
-            </button>
-          </div>
+        {/* Toggle Form Mode Link */}
+        <div style={{ marginTop: '24px', textAlign: 'center' }}>
+          <button
+            type="button"
+            className="btn-link"
+            onClick={() => {
+              setIsSignupMode(!isSignupMode);
+              setError('');
+              setName('');
+              setEmail('');
+              setPassword('');
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--primary)',
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              textDecoration: 'underline'
+            }}
+          >
+            {isSignupMode ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+          </button>
         </div>
 
       </div>
