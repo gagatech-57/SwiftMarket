@@ -262,12 +262,6 @@ const BuyerPage = ({ products, onAddToCart }) => {
               {/* Pagination Controls */}
               {totalPages > 1 && (
                 <div className="pagination-container fade-in">
-                  <div className="pagination-info">
-                    Showing <strong>{Math.min((activePage - 1) * itemsPerPage + 1, totalItems)}</strong> to{' '}
-                    <strong>{Math.min(activePage * itemsPerPage, totalItems)}</strong> of{' '}
-                    <strong>{totalItems}</strong> products
-                  </div>
-                  
                   <div className="pagination-buttons">
                     <button 
                       className="btn btn-secondary btn-sm"
@@ -338,16 +332,12 @@ const BuyerPage = ({ products, onAddToCart }) => {
         .pagination-container {
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content: center;
           margin-top: 40px;
           padding-top: 24px;
           border-top: 1px solid var(--border);
           flex-wrap: wrap;
           gap: 16px;
-        }
-        .pagination-info {
-          font-size: 0.9rem;
-          color: var(--text-secondary);
         }
         .pagination-buttons {
           display: flex;
