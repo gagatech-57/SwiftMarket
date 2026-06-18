@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import ProductList from './ProductList';
 import { RiSearchLine, RiCloseLine, RiShoppingCartLine, RiShoppingBagLine, RiArrowLeftSLine, RiArrowRightSLine, RiArrowLeftLine } from 'react-icons/ri';
 
-const BuyerPage = ({ products, onAddToCart }) => {
+const BuyerPage = ({ products, onAddToCart, cart = [], onRemoveFromCart }) => {
+  const isInCart = (product) => cart.some(item => item.id === product.id);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('newest'); // 'newest', 'price-low', 'price-high', 'name-asc', 'name-desc'
@@ -140,23 +141,48 @@ const BuyerPage = ({ products, onAddToCart }) => {
                 <div className="pdp-price">${quickViewProduct.price.toFixed(2)}</div>
                 <p className="pdp-desc">{quickViewProduct.description}</p>
                 
-                <button 
-                  className="btn btn-primary"
-                  onClick={() => onAddToCart(quickViewProduct)}
-                  style={{ 
-                    display: 'inline-flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    gap: '8px', 
-                    padding: '14px', 
-                    fontSize: '1rem', 
-                    width: '100%', 
-                    marginTop: '24px' 
-                  }}
-                >
-                  <RiShoppingCartLine />
-                  <span>Add to Shopping Cart</span>
-                </button>
+                {isInCart(quickViewProduct) ? (
+                  <button 
+                    className="btn btn-secondary"
+                    onClick={() => onRemoveFromCart(quickViewProduct.id)}
+                    style={{ 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '8px', 
+                      padding: '14px', 
+                      fontSize: '1rem', 
+                      width: '100%', 
+                      marginTop: '24px',
+                      backgroundColor: 'var(--danger-light)',
+                      color: 'var(--danger)',
+                      borderColor: 'var(--danger)',
+                      borderWidth: '1px',
+                      borderStyle: 'solid'
+                    }}
+                  >
+                    <RiCloseLine />
+                    <span>Remove from Cart</span>
+                  </button>
+                ) : (
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => onAddToCart(quickViewProduct)}
+                    style={{ 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '8px', 
+                      padding: '14px', 
+                      fontSize: '1rem', 
+                      width: '100%', 
+                      marginTop: '24px' 
+                    }}
+                  >
+                    <RiShoppingCartLine />
+                    <span>Add to Shopping Cart</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -171,6 +197,8 @@ const BuyerPage = ({ products, onAddToCart }) => {
                 products={relatedProducts} 
                 onAddToCart={onAddToCart} 
                 onQuickView={handleOpenQuickView} // clicking updates active PDP, looping infinitely
+                cart={cart}
+                onRemoveFromCart={onRemoveFromCart}
               />
             </div>
           )}
@@ -257,6 +285,8 @@ const BuyerPage = ({ products, onAddToCart }) => {
                 products={paginatedProducts} 
                 onAddToCart={onAddToCart} 
                 onQuickView={handleOpenQuickView} 
+                cart={cart}
+                onRemoveFromCart={onRemoveFromCart}
               />
 
               {/* Pagination Controls */}

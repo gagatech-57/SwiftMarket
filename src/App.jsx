@@ -231,6 +231,8 @@ function App() {
               <BuyerPage 
                 products={products} 
                 onAddToCart={handleAddToCart} 
+                cart={cart}
+                onRemoveFromCart={handleRemoveFromCart}
               />
             )}
           </main>

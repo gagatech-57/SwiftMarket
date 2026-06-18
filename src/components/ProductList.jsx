@@ -1,7 +1,8 @@
 import React from 'react';
-import { RiShoppingCartLine, RiEyeLine } from 'react-icons/ri';
+import { RiShoppingCartLine, RiEyeLine, RiCloseLine } from 'react-icons/ri';
 
-const ProductList = ({ products, onAddToCart, onQuickView }) => {
+const ProductList = ({ products, onAddToCart, onQuickView, cart = [], onRemoveFromCart }) => {
+  const isInCart = (product) => cart.some(item => item.id === product.id);
   return (
     <div className="grid-container fade-in">
       {products.map((product) => (
@@ -83,15 +84,34 @@ const ProductList = ({ products, onAddToCart, onQuickView }) => {
                 >
                   <RiEyeLine />
                 </button>
-                <button 
-                  className="btn btn-primary btn-sm"
-                  onClick={() => onAddToCart(product)}
-                  title="Add to Cart"
-                  aria-label="Add to cart"
-                >
-                  <RiShoppingCartLine />
-                  <span className="cart-btn-text"> Add to Cart</span>
-                </button>
+                {isInCart(product) ? (
+                  <button 
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => onRemoveFromCart(product.id)}
+                    title="Remove from Cart"
+                    aria-label="Remove from cart"
+                    style={{
+                      backgroundColor: 'var(--danger-light)',
+                      color: 'var(--danger)',
+                      borderColor: 'var(--danger)',
+                      borderWidth: '1px',
+                      borderStyle: 'solid'
+                    }}
+                  >
+                    <RiCloseLine />
+                    <span className="cart-btn-text"> Remove</span>
+                  </button>
+                ) : (
+                  <button 
+                    className="btn btn-primary btn-sm"
+                    onClick={() => onAddToCart(product)}
+                    title="Add to Cart"
+                    aria-label="Add to cart"
+                  >
+                    <RiShoppingCartLine />
+                    <span className="cart-btn-text"> Add to Cart</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
