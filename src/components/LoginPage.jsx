@@ -21,23 +21,13 @@ const LoginPage = ({ onLogin }) => {
       if (email.toLowerCase() === 'buyer@swiftmarket.com' && password === 'buyer123') {
         onLogin('buyer', email);
       } else {
-        // Allow any email/password, but if they entered something wrong, let's validate it
-        // Or let's accept any login to make it extremely easy to test, but check basic formatting!
-        if (!email.includes('@')) {
-          setError('Please enter a valid email address');
-        } else {
-          onLogin('buyer', email);
-        }
+        setError('Invalid buyer credentials. Please check your email and password.');
       }
     } else {
       if (email.toLowerCase() === 'seller@swiftmarket.com' && password === 'seller123') {
         onLogin('seller', email);
       } else {
-        if (!email.includes('@')) {
-          setError('Please enter a valid email address');
-        } else {
-          onLogin('seller', email);
-        }
+        setError('Invalid seller credentials. Please check your email and password.');
       }
     }
   };
