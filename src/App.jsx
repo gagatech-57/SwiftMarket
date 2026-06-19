@@ -6,6 +6,9 @@ import LoginPage from './components/LoginPage';
 import Cart from './components/Cart';
 import { RiCheckboxCircleLine, RiNotification3Line } from 'react-icons/ri';
 // Database backend handles product data
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? ''
+  : 'https://swiftmarket-d9vz.onrender.com';
 
 function App() {
   // 1. Initial State
@@ -13,7 +16,7 @@ function App() {
 
   // Fetch products from database
   useEffect(() => {
-    fetch('/api/products')
+    fetch(`${API_BASE}/api/products`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to load products');
         const contentType = res.headers.get('content-type');
@@ -30,7 +33,7 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      fetch('/api/auth/me', {
+      fetch(`${API_BASE}/api/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -96,7 +99,7 @@ function App() {
     
     const token = localStorage.getItem('token');
     if (token && isLoggedIn && userRole === 'buyer') {
-      fetch('/api/cart/sync', {
+      fetch(`${API_BASE}/api/cart/sync`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -163,7 +166,7 @@ function App() {
 
   // 5. Product actions (Seller)
   const handleAddProduct = (newProduct) => {
-    fetch('/api/products', {
+    fetch(`${API_BASE}/api/products`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -191,7 +194,7 @@ function App() {
 
   const handleDeleteProduct = (productId) => {
     const product = products.find(p => p.id === productId);
-    fetch(`/api/products/${productId}`, {
+    fetch(`${API_BASE}/api/products/${productId}`, {
       method: 'DELETE'
     })
     .then(res => {

@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { RiUser3Line, RiLockLine, RiShoppingBag3Line, RiStore2Line, RiArrowRightLine } from 'react-icons/ri';
 
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? ''
+  : 'https://swiftmarket-d9vz.onrender.com';
+
 const LoginPage = ({ onLogin }) => {
   const [activeTab, setActiveTab] = useState('buyer'); // 'buyer' or 'seller'
   const [isSignupMode, setIsSignupMode] = useState(false);
@@ -27,7 +31,7 @@ const LoginPage = ({ onLogin }) => {
       ? { name: name.trim(), email: email.toLowerCase().trim(), password, role: activeTab }
       : { email: email.toLowerCase().trim(), password };
 
-    fetch(endpoint, {
+    fetch(`${API_BASE}${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
