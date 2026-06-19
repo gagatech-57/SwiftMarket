@@ -16,7 +16,11 @@ function App() {
     fetch('/api/products')
       .then(res => {
         if (!res.ok) throw new Error('Failed to load products');
-        return res.json();
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          return res.json();
+        }
+        throw new Error('Server returned an invalid content-type');
       })
       .then(data => setProducts(data))
       .catch(err => console.error('Error fetching products:', err));
@@ -33,7 +37,11 @@ function App() {
       })
       .then(res => {
         if (!res.ok) throw new Error('Session expired');
-        return res.json();
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          return res.json();
+        }
+        throw new Error('Invalid server response format');
       })
       .then(data => {
         setIsLoggedIn(true);

@@ -35,11 +35,16 @@ const LoginPage = ({ onLogin }) => {
       body: JSON.stringify(requestBody)
     })
     .then(async (res) => {
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Authentication failed. Please try again.');
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Authentication failed. Please try again.');
+        }
+        return data;
+      } else {
+        throw new Error(`Server Error (${res.status}): The server returned an invalid response. If you are using Render, make sure you have deployed the latest backend code.`);
       }
-      return data;
     })
     .then((data) => {
       // Validate that the account role matches the active portal tab
