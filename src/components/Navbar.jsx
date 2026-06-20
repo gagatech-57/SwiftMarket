@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RiShoppingBag3Line, RiSunLine, RiMoonLine, RiShoppingCartLine, RiLogoutBoxRLine, RiStore2Line, RiDashboardLine, RiUserLine } from 'react-icons/ri';
+import { RiShoppingBag3Line, RiSunLine, RiMoonLine, RiShoppingCartLine, RiLogoutBoxRLine, RiStore2Line, RiDashboardLine } from 'react-icons/ri';
 
 const Navbar = ({ userRole, currentUser, theme, toggleTheme, cartCount, toggleCart, onLogout }) => {
   const [showDropdown, setShowDropdown] = useState(false);

@@ -3,8 +3,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('jsonwebtoken'); // we'll use bcryptjs manually
-const bcryptjs = require('bcryptjs');
 const Product = require('./models/Product');
 const User = require('./models/User');
 
@@ -15,6 +13,22 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey123';
 
 app.use(cors());
 app.use(express.json());
+
+// JWT Authentication Middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+};
 
 // In-Memory Fallback State (if MongoDB is offline)
 let isInMemoryMode = false;
@@ -575,11 +589,30 @@ app.get('/api/users', async (req, res) => {
 
 // Fetch all products
 app.get('/api/products', async (req, res) => {
+  let user = null;
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    try {
+      user = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      // Ignore token verification errors for general public fetches
+    }
+  }
+
+  const isSeller = user && user.role === 'seller';
+  const sellerIdentifier = user ? (isInMemoryMode ? user.email : user.id) : null;
+
   if (isInMemoryMode) {
+    if (isSeller) {
+      const filtered = inMemoryProducts.filter(p => p.sellerId === sellerIdentifier);
+      return res.json(filtered);
+    }
     return res.json(inMemoryProducts);
   } else {
     try {
-      const products = await Product.find({}).sort({ createdAt: -1 });
+      const query = isSeller ? { sellerId: sellerIdentifier } : {};
+      const products = await Product.find(query).sort({ createdAt: -1 });
       res.json(products);
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -588,11 +621,13 @@ app.get('/api/products', async (req, res) => {
 });
 
 // Add or edit a product
-app.post('/api/products', async (req, res) => {
+app.post('/api/products', authenticateToken, async (req, res) => {
   const { id, name, price, description, image, category } = req.body;
   if (!name || price === undefined) {
     return res.status(400).json({ error: 'Name and price are required' });
   }
+
+  const sellerIdentifier = isInMemoryMode ? req.user.email : req.user.id;
 
   const productData = {
     name,
@@ -607,13 +642,17 @@ app.post('/api/products', async (req, res) => {
       // Edit mode
       const idx = inMemoryProducts.findIndex(p => p.id === id);
       if (idx !== -1) {
+        // Ownership check
+        if (inMemoryProducts[idx].sellerId !== sellerIdentifier) {
+          return res.status(403).json({ error: 'Forbidden: You do not own this product' });
+        }
         inMemoryProducts[idx] = { ...inMemoryProducts[idx], ...productData };
         return res.json(inMemoryProducts[idx]);
       }
       return res.status(404).json({ error: 'Product not found' });
     } else {
       // Create mode
-      const newProd = { ...productData, id: `prod-${Date.now()}` };
+      const newProd = { ...productData, id: `prod-${Date.now()}`, sellerId: sellerIdentifier };
       inMemoryProducts.unshift(newProd); // prepending
       return res.status(201).json(newProd);
     }
@@ -621,16 +660,29 @@ app.post('/api/products', async (req, res) => {
     try {
       if (id) {
         // Edit mode
-        const updated = await Product.findOneAndUpdate({ id }, productData, { new: true });
-        if (!updated) {
+        const existing = await Product.findOne({ id });
+        if (!existing) {
           return res.status(404).json({ error: 'Product not found' });
         }
-        return res.json(updated);
+        // Ownership check
+        if (existing.sellerId !== sellerIdentifier) {
+          return res.status(403).json({ error: 'Forbidden: You do not own this product' });
+        }
+
+        existing.name = productData.name;
+        existing.price = productData.price;
+        existing.description = productData.description;
+        existing.image = productData.image;
+        existing.category = productData.category;
+
+        await existing.save();
+        return res.json(existing);
       } else {
         // Create mode
         const newProd = new Product({
           ...productData,
-          id: `prod-${Date.now()}`
+          id: `prod-${Date.now()}`,
+          sellerId: sellerIdentifier
         });
         await newProd.save();
         return res.status(201).json(newProd);
@@ -642,22 +694,32 @@ app.post('/api/products', async (req, res) => {
 });
 
 // Delete a product
-app.delete('/api/products/:id', async (req, res) => {
+app.delete('/api/products/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
+  const sellerIdentifier = isInMemoryMode ? req.user.email : req.user.id;
 
   if (isInMemoryMode) {
     const idx = inMemoryProducts.findIndex(p => p.id === id);
     if (idx !== -1) {
+      // Ownership check
+      if (inMemoryProducts[idx].sellerId !== sellerIdentifier) {
+        return res.status(403).json({ error: 'Forbidden: You do not own this product' });
+      }
       inMemoryProducts.splice(idx, 1);
       return res.json({ success: true, message: 'Deleted from in-memory catalog' });
     }
     return res.status(404).json({ error: 'Product not found' });
   } else {
     try {
-      const deleted = await Product.findOneAndDelete({ id });
-      if (!deleted) {
+      const existing = await Product.findOne({ id });
+      if (!existing) {
         return res.status(404).json({ error: 'Product not found' });
       }
+      // Ownership check
+      if (existing.sellerId !== sellerIdentifier) {
+        return res.status(403).json({ error: 'Forbidden: You do not own this product' });
+      }
+      await Product.findOneAndDelete({ id });
       res.json({ success: true, message: 'Deleted from MongoDB successfully' });
     } catch (err) {
       res.status(500).json({ error: err.message });

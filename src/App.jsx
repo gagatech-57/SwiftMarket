@@ -14,9 +14,45 @@ function App() {
   // 1. Initial State
   const [products, setProducts] = useState([]);
 
+  const [cart, setCart] = useState(() => {
+    const saved = localStorage.getItem('cart');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('isLoggedIn') === 'true';
+  });
+
+  const [userRole, setUserRole] = useState(() => {
+    return localStorage.getItem('userRole') || null; // 'buyer' or 'seller'
+  });
+
+  const [currentUser, setCurrentUser] = useState(() => {
+    return {
+      email: localStorage.getItem('currentUserEmail') || '',
+      name: localStorage.getItem('currentUserName') || ''
+    };
+  });
+
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [toast, setToast] = useState(null); // { message: string, type: 'success' | 'info' }
+  const [isCheckoutSuccess, setIsCheckoutSuccess] = useState(false);
+
   // Fetch products from database
   useEffect(() => {
-    fetch(`${API_BASE}/api/products`)
+    const token = localStorage.getItem('token');
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    fetch(`${API_BASE}/api/products`, { headers })
       .then(res => {
         if (!res.ok) throw new Error('Failed to load products');
         const contentType = res.headers.get('content-type');
@@ -27,7 +63,7 @@ function App() {
       })
       .then(data => setProducts(data))
       .catch(err => console.error('Error fetching products:', err));
-  }, []);
+  }, [isLoggedIn, userRole]);
 
   // Validate JWT session token on load
   useEffect(() => {
@@ -59,37 +95,8 @@ function App() {
         handleLogout();
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const [cart, setCart] = useState(() => {
-    const saved = localStorage.getItem('cart');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return localStorage.getItem('isLoggedIn') === 'true';
-  });
-
-  const [userRole, setUserRole] = useState(() => {
-    return localStorage.getItem('userRole') || null; // 'buyer' or 'seller'
-  });
-
-  const [currentUser, setCurrentUser] = useState(() => {
-    return {
-      email: localStorage.getItem('currentUserEmail') || '',
-      name: localStorage.getItem('currentUserName') || ''
-    };
-  });
-
-  const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('theme');
-    if (saved) return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
-
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [toast, setToast] = useState(null); // { message: string, type: 'success' | 'info' }
-  const [isCheckoutSuccess, setIsCheckoutSuccess] = useState(false);
 
   // 2. Persist State in LocalStorage (Products managed in database, only syncing Cart/Theme)
 
@@ -166,10 +173,12 @@ function App() {
 
   // 5. Product actions (Seller)
   const handleAddProduct = (newProduct) => {
+    const token = localStorage.getItem('token');
     fetch(`${API_BASE}/api/products`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(newProduct)
     })
@@ -194,8 +203,12 @@ function App() {
 
   const handleDeleteProduct = (productId) => {
     const product = products.find(p => p.id === productId);
+    const token = localStorage.getItem('token');
     fetch(`${API_BASE}/api/products/${productId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     })
     .then(res => {
       if (!res.ok) throw new Error('Failed to delete product');

@@ -31,7 +31,18 @@ const ProductForm = ({ onSubmit, editingProduct, onCancelEdit }) => {
   const [errors, setErrors] = useState({});
   const fileInputRef = useRef(null);
 
+  const resetForm = () => {
+    setName('');
+    setPrice('');
+    setDescription('');
+    setCategory('Electronics');
+    setImage(PRESETS[0].url);
+    setImageSourceType('preset');
+    setErrors({});
+  };
+
   // Sync editing state
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (editingProduct) {
       setName(editingProduct.name);
@@ -51,16 +62,7 @@ const ProductForm = ({ onSubmit, editingProduct, onCancelEdit }) => {
       resetForm();
     }
   }, [editingProduct]);
-
-  const resetForm = () => {
-    setName('');
-    setPrice('');
-    setDescription('');
-    setCategory('Electronics');
-    setImage(PRESETS[0].url);
-    setImageSourceType('preset');
-    setErrors({});
-  };
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
