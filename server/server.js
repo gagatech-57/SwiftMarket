@@ -21,7 +21,7 @@ let isInMemoryMode = false;
 let inMemoryProducts = [];
 let inMemoryUsers = [];
 
-// Helper to generate the 700 mock products
+// Helper to generate the 1800 mock products
 const PRODUCT_TEMPLATES = {
   Electronics: {
     names: ['Pro Mobile Phone', 'Ultra Slim Laptop', 'Noise-Cancelling Earbuds', 'Fast Charging Pad', '4K USB-C Hub', 'Bluetooth Audio Transmitter', 'Mechanical Keyboard Mini', 'Portable SSD 1TB', 'Wireless Ergonomic Mouse', 'HD Webcam 1080p'],
@@ -282,8 +282,8 @@ function generateSeededProducts() {
     });
   }
 
-  // 2. Books (401 - 500)
-  for (let i = 401; i <= 500; i++) {
+  // 2. Books (401 - 800)
+  for (let i = 401; i <= 800; i++) {
     const templateIndex = (i - 401) % BOOK_TEMPLATES.names.length;
     const baseName = BOOK_TEMPLATES.names[templateIndex];
     const desc = BOOK_TEMPLATES.descriptions[templateIndex];
@@ -307,14 +307,14 @@ function generateSeededProducts() {
     });
   }
 
-  // 3. Men's Fashion (501 - 600)
-  for (let i = 501; i <= 600; i++) {
-    const templateIndex = (i - 501) % MENS_TEMPLATES.names.length;
+  // 3. Men's Fashion (801 - 1300)
+  for (let i = 801; i <= 1300; i++) {
+    const templateIndex = (i - 801) % MENS_TEMPLATES.names.length;
     const baseName = MENS_TEMPLATES.names[templateIndex];
     const desc = MENS_TEMPLATES.descriptions[templateIndex];
     const img = MENS_TEMPLATES.images[templateIndex];
     
-    const suffixNumber = Math.floor((i - 501) / MENS_TEMPLATES.names.length) + 1;
+    const suffixNumber = Math.floor((i - 801) / MENS_TEMPLATES.names.length) + 1;
     const name = `${baseName} ${suffixNumber > 1 ? `Edition ${suffixNumber}` : ''}`.trim();
     
     const basePrice = 29.99;
@@ -332,14 +332,14 @@ function generateSeededProducts() {
     });
   }
 
-  // 4. Women's Fashion (601 - 700)
-  for (let i = 601; i <= 700; i++) {
-    const templateIndex = (i - 601) % WOMENS_TEMPLATES.names.length;
+  // 4. Women's Fashion (1301 - 1800)
+  for (let i = 1301; i <= 1800; i++) {
+    const templateIndex = (i - 1301) % WOMENS_TEMPLATES.names.length;
     const baseName = WOMENS_TEMPLATES.names[templateIndex];
     const desc = WOMENS_TEMPLATES.descriptions[templateIndex];
     const img = WOMENS_TEMPLATES.images[templateIndex];
     
-    const suffixNumber = Math.floor((i - 601) / WOMENS_TEMPLATES.names.length) + 1;
+    const suffixNumber = Math.floor((i - 1301) / WOMENS_TEMPLATES.names.length) + 1;
     const name = `${baseName} ${suffixNumber > 1 ? `Edition ${suffixNumber}` : ''}`.trim();
     
     const basePrice = 29.99;
@@ -369,11 +369,14 @@ async function seedDatabase() {
 
     // 2. Seed Products
     const productCount = await Product.countDocuments();
-    if (productCount === 0) {
-      console.log('Seeding 700 mock products to MongoDB...');
+    if (productCount < 1800) {
+      console.log(`Current product count is ${productCount}. Re-seeding database to 1800 mock products...`);
+      await Product.deleteMany({});
       const products = generateSeededProducts();
       await Product.insertMany(products);
-      console.log('700 products seeded successfully!');
+      console.log('1800 products seeded successfully!');
+    } else {
+      console.log('Database already has 1800 or more products.');
     }
   } catch (error) {
     console.error('Error seeding database:', error.message);
@@ -385,7 +388,7 @@ function seedInMemoryState() {
   console.log('Initializing in-memory mock storage...');
   inMemoryProducts = generateSeededProducts();
   inMemoryUsers = []; // starts empty, users register dynamic accounts!
-  console.log('In-memory storage ready with 700 products. No demo accounts seeded.');
+  console.log('In-memory storage ready with 1800 products. No demo accounts seeded.');
 }
 
 // Connect to MongoDB

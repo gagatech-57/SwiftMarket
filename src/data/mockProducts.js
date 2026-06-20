@@ -136,7 +136,7 @@ const PRODUCT_TEMPLATES = {
   }
 };
 
-export const generate700Products = () => {
+export const generate1800Products = () => {
   const products = [];
   const categories = Object.keys(PRODUCT_TEMPLATES);
   
@@ -180,8 +180,8 @@ export const generate700Products = () => {
     });
   }
 
-  // 2. Books (401 - 500)
-  for (let i = 401; i <= 500; i++) {
+  // 2. Books (401 - 800)
+  for (let i = 401; i <= 800; i++) {
     const templateIndex = (i - 401) % BOOK_TEMPLATES.names.length;
     const baseName = BOOK_TEMPLATES.names[templateIndex];
     const desc = BOOK_TEMPLATES.descriptions[templateIndex];
@@ -205,14 +205,14 @@ export const generate700Products = () => {
     });
   }
 
-  // 3. Men's Fashion (501 - 600)
-  for (let i = 501; i <= 600; i++) {
-    const templateIndex = (i - 501) % MENS_TEMPLATES.names.length;
+  // 3. Men's Fashion (801 - 1300)
+  for (let i = 801; i <= 1300; i++) {
+    const templateIndex = (i - 801) % MENS_TEMPLATES.names.length;
     const baseName = MENS_TEMPLATES.names[templateIndex];
     const desc = MENS_TEMPLATES.descriptions[templateIndex];
     const img = MENS_TEMPLATES.images[templateIndex];
     
-    const suffixNumber = Math.floor((i - 501) / MENS_TEMPLATES.names.length) + 1;
+    const suffixNumber = Math.floor((i - 801) / MENS_TEMPLATES.names.length) + 1;
     const name = `${baseName} ${suffixNumber > 1 ? `Edition ${suffixNumber}` : ''}`.trim();
     
     const basePrice = 29.99;
@@ -230,14 +230,14 @@ export const generate700Products = () => {
     });
   }
 
-  // 4. Women's Fashion (601 - 700)
-  for (let i = 601; i <= 700; i++) {
-    const templateIndex = (i - 601) % WOMENS_TEMPLATES.names.length;
+  // 4. Women's Fashion (1301 - 1800)
+  for (let i = 1301; i <= 1800; i++) {
+    const templateIndex = (i - 1301) % WOMENS_TEMPLATES.names.length;
     const baseName = WOMENS_TEMPLATES.names[templateIndex];
     const desc = WOMENS_TEMPLATES.descriptions[templateIndex];
     const img = WOMENS_TEMPLATES.images[templateIndex];
     
-    const suffixNumber = Math.floor((i - 601) / WOMENS_TEMPLATES.names.length) + 1;
+    const suffixNumber = Math.floor((i - 1301) / WOMENS_TEMPLATES.names.length) + 1;
     const name = `${baseName} ${suffixNumber > 1 ? `Edition ${suffixNumber}` : ''}`.trim();
     
     const basePrice = 29.99;
@@ -258,8 +258,12 @@ export const generate700Products = () => {
   return products;
 };
 
+export const generate700Products = () => {
+  return generate1800Products();
+};
+
 export const generate400Products = () => {
-  return generate700Products();
+  return generate1800Products();
 };
 
 const BOOK_TEMPLATES = {
